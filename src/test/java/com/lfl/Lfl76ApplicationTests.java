@@ -186,4 +186,97 @@ class UserControllerTest {
 }
 
 
+@WebMvcTest(UserController.class)
+class UserControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private UserService userService;
+
+    private User user;
+
+    @BeforeEach
+    void setup() {
+        user = new User(1L, "Alice", "alice@example.com");
+    }
+
+    @Test
+    void shouldShowUserList() throws Exception {
+        // given
+        when(userService.getAllUsers()).thenReturn(List.of(user));
+
+        // when + then
+        mockMvc.perform(get("/users"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("user-list"))
+            .andExpect(model().attributeExists("users"));
+    }
+
+    @Test
+    void shouldShowCreateForm() throws Exception {
+        // given - nothing
+
+        // when + then
+        mockMvc.perform(get("/users/create"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("user-form"));
+    }
+
+    @Test
+    void shouldSaveUserAndRedirect() throws Exception {
+        // given
+        when(userService.createUser(any(User.class))).thenReturn(user);
+
+        // when + then
+        mockMvc.perform(post("/users/save")
+                .param("name", "Alice")
+                .param("email", "alice@example.com"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/users"));
+    }
+
+    @Test
+    void shouldShowEditForm() throws Exception {
+        // given
+        when(userService.getUserById(1L)).thenReturn(user);
+
+        // when + then
+        mockMvc.perform(get("/users/edit/1"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("user-form"))
+            .andExpect(model().attributeExists("user"));
+    }
+
+    @Test
+    void shouldUpdateUserAndRedirect() throws Exception {
+        // given
+        when(userService.updateUser(any(User.class))).thenReturn(user);
+
+        // when + then
+        mockMvc.perform(post("/users/update")
+                .param("id", "1")
+                .param("name", "Alice Updated")
+                .param("email", "alice.updated@example.com"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/users"));
+    }
+
+    @Test
+    void shouldDeleteUserAndRedirect() throws Exception {
+        // given - nothing
+
+        // when + then
+        mockMvc.perform(get("/users/delete/1"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/users"));
+
+        verify(userService).deleteUser(1L);
+    }
+}
+
+
+
+
 
